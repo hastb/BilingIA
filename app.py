@@ -1,12 +1,17 @@
 import os
+import pathlib
 import streamlit as st
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
 from PIL import Image
 
-# 1. Carregar variáveis de ambiente
-load_dotenv()
+# 1. Força a localização exata da pasta do projeto e do ficheiro .env
+BASE_DIR = pathlib.Path(__file__).parent.resolve()
+ENV_PATH = BASE_DIR / ".env"
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=ENV_PATH)
+except ImportError:
+    pass
 
 # 2. Configuração Visual da Página
 st.set_page_config(
@@ -70,12 +75,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 4. Inicializar o Cliente Oficial do Gemini
-api_key = os.getenv("GEMINI_API_KEY")
+# 4. Inicializar o Cliente Oficial do Gemini com Dupla Verificação
+api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
     st.error("Chave GEMINI_API_KEY não encontrada no ficheiro .env ou nos Secrets do Streamlit. Por favor, verifique a configuração.")
     st.stop()
+
+from google import genai
+from google.genai import types
 
 client = genai.Client(api_key=api_key)
 
@@ -271,7 +279,7 @@ if modo_interacao == "💬 Chat STEM+L":
                     st.session_state.messages.append({"role": "assistant", "content": bot_response})
 
                 except Exception as e:
-                    st.error(f"Erro ao ligar ao serviço do Gemini: {e}")
+                    st.error(f"Erro detalhado local: {e}")
 
 # ==============================================================================
 # MODO 2: RECONHECIMENTO DE BIODIVERSIDADE E IMAGEM
@@ -338,4 +346,4 @@ elif modo_interacao == "📸 Reconhecimento de Imagem":
                     st.write(response.text)
 
                 except Exception as e:
-                    st.error(f"Erro ao analisar a imagem com o Gemini: {e}")
+                    st.error(f"Erro detalhado local: {e}")
